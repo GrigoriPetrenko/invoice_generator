@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faktura VAT</title>
+    <link rel="stylesheet" href="invoice.css">
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>FAKTURA VAT</h1>
+            <p>Numer: {{INVOICE_NUMBER}}</p>
+        </div>
+        
+        <!-- Invoice Info -->
+        <div class="invoice-info">
+            <div class="info-block">
+                <p><strong>Data wystawienia:</strong> {{ISSUE_DATE}}</p>
+            </div>
+            <div class="info-block">
+                <p><strong>Data sprzedaży:</strong> {{SALE_DATE}}</p>
+            </div>
+        </div>
+        
+        <!-- Seller and Buyer -->
+        <div class="party-info">
+            <div class="party">
+                <h3>Sprzedawca</h3>
+                <p>{{SELLER_NAME}}</p>
+                <p>NIP: {{SELLER_NIP}}</p>
+                <p>{{SELLER_STREET_ADDRESS}}</p>
+                <p>{{SELLER_POSTAL_CODE}} {{SELLER_CITY}}</p>
+            </div>
+            
+            <div class="party">
+                <h3>Nabywca</h3>
+                <p>{{BUYER_NAME}}</p>
+                <p>NIP: {{BUYER_NIP}}</p>
+                <p>{{BUYER_STREET_ADDRESS}}</p>
+                <p>{{BUYER_POSTAL_CODE}} {{BUYER_CITY}}</p>
+            </div>
+        </div>
+        
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Lp.</th>
+                    <th>Nazwa towaru / usługi</th>
+                    <th>Jedn. miary</th>
+                    <th>Il.</th>
+                    <th>Cena netto</th>
+                    <th>Wartość netto</th>
+                    <th>Stawka VAT</th>
+                    <th>Kwota VAT</th>
+                    <th>Wartość brutto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ITEMS_TABLE_ROWS}}
+            </tbody>
+        </table>
+        
+        <!-- Totals -->
+        <div class="totals">
+            <table>
+                <tr>
+                    <td>Suma netto:</td>
+                    <td>{{TOTAL_NET_AMOUNT}}</td>
+                </tr>
+                <tr>
+                    <td>Suma VAT:</td>
+                    <td>{{TOTAL_VAT_AMOUNT}}</td>
+                </tr>
+                <tr style="font-weight: bold; font-size: 11pt;">
+                    <td>Suma brutto:</td>
+                    <td>{{TOTAL_GROSS_AMOUNT}}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Payment Information -->
+        <div class="payment-info">
+            <p><strong>Słownie:</strong> <span class="amount-in-words">{{AMOUNT_DUE_IN_WORDS}}</span></p>
+            <p><strong>Metoda płatności:</strong> {{PAYMENT_METHOD}}</p>
+            <p><strong>Termin płatności:</strong> {{PAYMENT_DUE_DATE}}</p>
+            <p><strong>Numer rachunku:</strong> {{BANK_ACCOUNT}}</p>
+        </div>
+        
+        <!-- Signatures -->
+        <div class="signatures">
+            <div class="signature-box">
+                <p>Podpis osoby upoważnionej do wystawienia:</p>
+                <div class="signature-line"></div>
+                <p style="margin-top: 5px;">{{AUTHORIZED_ISSUER}}</p>
+            </div>
+            
+            <div class="signature-box">
+                <p>Podpis osoby upoważnionej do odbioru:</p>
+                <div class="signature-line"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
