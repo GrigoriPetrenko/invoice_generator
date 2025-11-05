@@ -143,21 +143,41 @@ body {
     display: flex;
     justify-content: space-between;
     margin-top: 40px;
+    align-items: flex-start;
 }
 
 .signature-box {
     width: 48%;
+    display: flex;
+    flex-direction: column;
 }
 
-.signature-box p {
-    margin: 5px 0;
+.signature-label {
+    margin: 0 0 8px 0;
     font-size: 9pt;
+    line-height: 1.2;
+}
+
+.signature-name {
+    margin: 0 0 12px 0;
+    font-size: 11pt;
+    font-weight: bold;
+    line-height: 1.2;
+    min-height: 1.2em;
+}
+
+.signature-spacer {
+    height: 1.2em;
+    margin: 0 0 12px 0;
 }
 
 .signature-line {
     border-top: 1px solid #000;
-    margin-top: 40px;
+    width: 100%;
+    margin: 0 0 10px 0;
+    height: 0;
 }
+
 
 @media print {
     body {

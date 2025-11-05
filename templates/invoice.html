@@ -11,16 +11,16 @@
         <!-- Header -->
         <div class="header">
             <h1>FAKTURA VAT</h1>
-            <p>Numer: FV/2024/001</p>
+            <p>Numer: {{INVOICE_NUMBER}}</p>
         </div>
         
         <!-- Invoice Info -->
         <div class="invoice-info">
             <div class="info-block">
-                <p><strong>Data wystawienia:</strong> 2024-01-15</p>
+                <p><strong>Data wystawienia:</strong> {{ISSUE_DATE}}</p>
             </div>
             <div class="info-block">
-                <p><strong>Data sprzedaży:</strong> 2024-01-15</p>
+                <p><strong>Data sprzedaży:</strong> {{SALE_DATE}}</p>
             </div>
         </div>
         
@@ -28,18 +28,18 @@
         <div class="party-info">
             <div class="party">
                 <h3>Sprzedawca</h3>
-                <p>My Company Sp. z o.o.</p>
-                <p>NIP: 1234567890</p>
-                <p>ul. Example 123</p>
-                <p>00-000 Warszawa</p>
+                <p>{{SELLER_NAME}}</p>
+                <p>NIP: {{SELLER_NIP}}</p>
+                <p>{{SELLER_STREET_ADDRESS}}</p>
+                <p>{{SELLER_POSTAL_CODE}} {{SELLER_CITY}}</p>
             </div>
             
             <div class="party">
                 <h3>Nabywca</h3>
-                <p>Client Company Ltd.</p>
-                <p>NIP: 0987654321</p>
-                <p>ul. Client 456</p>
-                <p>01-234 Kraków</p>
+                <p>{{BUYER_NAME}}</p>
+                <p>NIP: {{BUYER_NIP}}</p>
+                <p>{{BUYER_STREET_ADDRESS}}</p>
+                <p>{{BUYER_POSTAL_CODE}} {{BUYER_CITY}}</p>
             </div>
         </div>
         
@@ -59,18 +59,7 @@
                 </tr>
             </thead>
             <tbody>
-                
-                <tr>
-                    <td>1</td>
-                    <td>Software Development Services</td>
-                    <td>godz</td>
-                    <td>10</td>
-                    <td>100.00</td>
-                    <td>1 000,00</td>
-                    <td>23%</td>
-                    <td>230,00</td>
-                    <td>1 230,00</td>
-                </tr>
+                {{ITEMS_TABLE_ROWS}}
             </tbody>
         </table>
         
@@ -79,37 +68,38 @@
             <table>
                 <tr>
                     <td>Suma netto:</td>
-                    <td>1 000,00 PLN</td>
+                    <td>{{TOTAL_NET_AMOUNT}}</td>
                 </tr>
                 <tr>
                     <td>Suma VAT:</td>
-                    <td>230,00 PLN</td>
+                    <td>{{TOTAL_VAT_AMOUNT}}</td>
                 </tr>
                 <tr style="font-weight: bold; font-size: 11pt;">
                     <td>Suma brutto:</td>
-                    <td>1 230,00 PLN</td>
+                    <td>{{TOTAL_GROSS_AMOUNT}}</td>
                 </tr>
             </table>
         </div>
         
         <!-- Payment Information -->
         <div class="payment-info">
-            <p><strong>Słownie:</strong> <span class="amount-in-words">tysiąc dwieście trzydzieści złotych</span></p>
-            <p><strong>Metoda płatności:</strong> Przelew bankowy</p>
-            <p><strong>Termin płatności:</strong> 2024-02-15</p>
-            <p><strong>Numer rachunku:</strong> 12 3456 7890 1234 5678 9012 3456</p>
+            <p><strong>Słownie:</strong> <span class="amount-in-words">{{AMOUNT_DUE_IN_WORDS}}</span></p>
+            <p><strong>Metoda płatności:</strong> {{PAYMENT_METHOD}}</p>
+            <p><strong>Termin płatności:</strong> {{PAYMENT_DUE_DATE}}</p>
+            <p><strong>Numer rachunku:</strong> {{BANK_ACCOUNT}}</p>
         </div>
         
         <!-- Signatures -->
         <div class="signatures">
             <div class="signature-box">
-                <p>Podpis osoby upoważnionej do wystawienia:</p>
+                <p class="signature-label">Podpis osoby upoważnionej do wystawienia:</p>
+                <p class="signature-name">{{AUTHORIZED_ISSUER}}</p>
                 <div class="signature-line"></div>
-                <p style="margin-top: 5px;">{{AUTHORIZED_ISSUER}}</p>
             </div>
             
             <div class="signature-box">
-                <p>Podpis osoby upoważnionej do odbioru:</p>
+                <p class="signature-label">Podpis osoby upoważnionej do odbioru:</p>
+                <div class="signature-spacer"></div>
                 <div class="signature-line"></div>
             </div>
         </div>

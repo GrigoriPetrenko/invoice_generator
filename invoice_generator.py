@@ -1,9 +1,12 @@
 # Step 1: Import the variables from template.py
-from template import invoice_number, issue_date, sale_date, seller_name, seller_nip, seller_street_address, seller_postal_code, seller_city, buyer_name, buyer_nip, buyer_street_address, buyer_postal_code, buyer_city, items, total_net_amount, total_vat_amount, total_gross_amount, payment_method, payment_due_date, bank_account, amount_due_in_words
+from template import invoice_number, issue_date, sale_date, seller_name, seller_nip, seller_street_address, seller_postal_code, seller_city, buyer_name, buyer_nip, buyer_street_address, buyer_postal_code, buyer_city, items, total_net_amount, total_vat_amount, total_gross_amount, payment_method, payment_due_date, bank_account, amount_due_in_words, authorized_issuer
 
-# Step 2: Read the HTML template
-with open('invoice.html', 'r', encoding='utf-8') as file:
+# Step 2: Read the HTML template and CSS
+with open('templates/invoice.html', 'r', encoding='utf-8') as file:
     html_content = file.read()
+
+with open('templates/invoice.css', 'r', encoding='utf-8') as file:
+    css_content = file.read()
 
 # Step 3: Generate items table rows
 def generate_items_rows(items):
@@ -47,7 +50,21 @@ html_content = html_content.replace('{{PAYMENT_METHOD}}', payment_method)
 html_content = html_content.replace('{{PAYMENT_DUE_DATE}}', payment_due_date)
 html_content = html_content.replace('{{BANK_ACCOUNT}}', bank_account)
 html_content = html_content.replace('{{AMOUNT_DUE_IN_WORDS}}', amount_due_in_words)
+html_content = html_content.replace('{{AUTHORIZED_ISSUER}}', authorized_issuer)
 
-# Step 4: Save the result
-with open('generated_invoice.html', 'w', encoding='utf-8') as file:
+# Embed CSS directly in HTML (replace link tag with style tag)
+css_style_tag = f'<style>\n{css_content}\n</style>'
+html_content = html_content.replace('<link rel="stylesheet" href="invoice.css">', css_style_tag)
+
+# Step 5: Save the result to output folder
+import os
+os.makedirs('output', exist_ok=True)
+
+# Create filename from invoice number (replace / with - for valid filename)
+safe_invoice_number = invoice_number.replace('/', '-')
+output_filename = f'output/invoice_{safe_invoice_number}.html'
+
+with open(output_filename, 'w', encoding='utf-8') as file:
     file.write(html_content)
+
+print(f"Invoice saved as: {output_filename}")

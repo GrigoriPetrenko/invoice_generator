@@ -24,6 +24,9 @@ buyer_street_address = data['buyer_street_address']
 buyer_postal_code = data['buyer_postal_code']
 buyer_city = data['buyer_city']
 
+# Signature and Authorized Issuer
+authorized_issuer = data['authorized_issuer']
+
 # Get items from file
 items_data = data['items']
 items = []

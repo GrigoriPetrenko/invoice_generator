@@ -24,6 +24,8 @@
   ],
   "payment_method": "Przelew bankowy",
   "payment_due_date": "2024-02-15",
-  "bank_account": "12 3456 7890 1234 5678 9012 3456"
+  "bank_account": "12 3456 7890 1234 5678 9012 3456",
+  "authorized_issuer": "John Doe"
+
 }
 
