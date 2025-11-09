@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator faktur VAT</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        :root {
+            color-scheme: light;
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --bg: #f4f5fb;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #d1d5db;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #b91c1c;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+            margin: 0;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 16px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 55px rgba(79, 70, 229, 0.18);
+            width: 100%;
+            max-width: 520px;
+            padding: 36px 32px;
+        }
+        h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        p.description {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        form {
+            margin-top: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        label.file-drop {
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            color: var(--muted);
+            background: #f9fafb;
+        }
+        label.file-drop strong {
+            display: block;
+            color: var(--text);
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+        label.file-drop:hover,
+        label.file-drop.dragover {
+            border-color: var(--primary);
+            background: #eef2ff;
+            color: var(--primary-dark);
+        }
+        input[type="file"] {
+            display: none;
+        }
+        button {
+            padding: 14px 18px;
+            border: none;
+            border-radius: 12px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        button:disabled {
+            background: #c7d2fe;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .message {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            display: none;
+        }
+        .message.show {
+            display: block;
+        }
+        .message.success {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+        .message.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+        .message a {
+            color: inherit;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .message a:hover {
+            text-decoration: underline;
+        }
+        .file-name {
+            display: block;
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Generator faktur VAT</h1>
+        <p class="description">
+            Wybierz plik <strong>JSON</strong> zawierający dane faktury. Po przetworzeniu otrzymasz gotowy plik HTML.
+        </p>
+        <form id="uploadForm">
+            <label class="file-drop" id="dropZone">
+                <strong>Kliknij lub upuść plik tutaj</strong>
+                <span>Obsługiwane formaty: .json</span>
+                <span class="file-name" id="fileName">Nie wybrano pliku</span>
+                <input type="file" id="invoiceFile" name="invoice_file" accept="application/json,.json" required>
+            </label>
+            <button type="submit" id="submitButton">Generuj fakturę</button>
+        </form>
+        <div class="message" id="messageBox"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('invoiceFile');
+        const messageBox = document.getElementById('messageBox');
+        const dropZone = document.getElementById('dropZone');
+        const submitButton = document.getElementById('submitButton');
+        const fileNameLabel = document.getElementById('fileName');
+
+        function showMessage(text, type = 'success') {
+            messageBox.innerHTML = text;
+            messageBox.className = `message show ${type}`;
+        }
+
+        function resetMessage() {
+            messageBox.innerHTML = '';
+            messageBox.className = 'message';
+        }
+
+        function updateFileName(file) {
+            if (file) {
+                fileNameLabel.textContent = file.name;
+            } else {
+                fileNameLabel.textContent = 'Nie wybrano pliku';
+            }
+        }
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (event.dataTransfer.files.length) {
+                fileInput.files = event.dataTransfer.files;
+                updateFileName(fileInput.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            updateFileName(fileInput.files[0]);
+            resetMessage();
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            resetMessage();
+
+            if (!fileInput.files.length) {
+                showMessage('Wybierz plik JSON przed wysłaniem.', 'error');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Przetwarzanie...';
+
+            const formData = new FormData();
+            formData.append('invoice_file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData,
+                    cache: 'no-store',
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Nie udało się wygenerować faktury.');
+                }
+
+                window.open(result.download_url, '_blank');
+                showMessage(
+                    `Faktura została wygenerowana. <a href="${result.download_url}" target="_blank" rel="noopener">Pobierz HTML</a>`,
+                    'success'
+                );
+                form.reset();
+                updateFileName(null);
+            } catch (error) {
+                const networkErrorHint = error.message === 'Failed to fetch'
+                    ? 'Nie udało się połączyć z serwerem. Upewnij się, że aplikacja działa (uruchom: python web_app.py).' 
+                    : error.message;
+                showMessage(networkErrorHint, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Generuj fakturę';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,14 +1,18 @@
-# Step 1: Import the variables from template.py
-from template import invoice_number, issue_date, sale_date, seller_name, seller_nip, seller_street_address, seller_postal_code, seller_city, buyer_name, buyer_nip, buyer_street_address, buyer_postal_code, buyer_city, items, total_net_amount, total_vat_amount, total_gross_amount, payment_method, payment_due_date, bank_account, amount_due_in_words, authorized_issuer
+import os
+from typing import Dict
 
-# Step 2: Read the HTML template and CSS
-with open('templates/invoice.html', 'r', encoding='utf-8') as file:
-    html_content = file.read()
+from template import load_invoice_context_from_file
 
-with open('templates/invoice.css', 'r', encoding='utf-8') as file:
-    css_content = file.read()
+TEMPLATE_PATH = os.path.join("templates", "invoice.html")
+CSS_PATH = os.path.join("templates", "invoice.css")
+OUTPUT_DIR = "output"
 
-# Step 3: Generate items table rows
+
+def _read_file(path: str) -> str:
+    with open(path, "r", encoding="utf-8") as file:
+        return file.read()
+
+
 def generate_items_rows(items):
     rows = ""
     for item in items:
@@ -26,45 +30,68 @@ def generate_items_rows(items):
                 </tr>"""
     return rows
 
-items_table_rows = generate_items_rows(items)
 
-# Step 4: Replace the placeholder with actual data
-html_content = html_content.replace('{{INVOICE_NUMBER}}', invoice_number)
-html_content = html_content.replace('{{ISSUE_DATE}}', issue_date)
-html_content = html_content.replace('{{SALE_DATE}}', sale_date)
-html_content = html_content.replace('{{SELLER_NAME}}', seller_name)
-html_content = html_content.replace('{{SELLER_NIP}}', seller_nip)
-html_content = html_content.replace('{{SELLER_STREET_ADDRESS}}', seller_street_address)
-html_content = html_content.replace('{{SELLER_POSTAL_CODE}}', seller_postal_code)
-html_content = html_content.replace('{{SELLER_CITY}}', seller_city)
-html_content = html_content.replace('{{BUYER_NAME}}', buyer_name)
-html_content = html_content.replace('{{BUYER_NIP}}', buyer_nip)
-html_content = html_content.replace('{{BUYER_STREET_ADDRESS}}', buyer_street_address)
-html_content = html_content.replace('{{BUYER_POSTAL_CODE}}', buyer_postal_code)
-html_content = html_content.replace('{{BUYER_CITY}}', buyer_city)
-html_content = html_content.replace('{{ITEMS_TABLE_ROWS}}', items_table_rows)
-html_content = html_content.replace('{{TOTAL_NET_AMOUNT}}', total_net_amount)
-html_content = html_content.replace('{{TOTAL_VAT_AMOUNT}}', total_vat_amount)
-html_content = html_content.replace('{{TOTAL_GROSS_AMOUNT}}', total_gross_amount)
-html_content = html_content.replace('{{PAYMENT_METHOD}}', payment_method)
-html_content = html_content.replace('{{PAYMENT_DUE_DATE}}', payment_due_date)
-html_content = html_content.replace('{{BANK_ACCOUNT}}', bank_account)
-html_content = html_content.replace('{{AMOUNT_DUE_IN_WORDS}}', amount_due_in_words)
-html_content = html_content.replace('{{AUTHORIZED_ISSUER}}', authorized_issuer)
+def render_invoice_html(context: Dict[str, str]) -> str:
+    html_content = _read_file(TEMPLATE_PATH)
+    css_content = _read_file(CSS_PATH)
 
-# Embed CSS directly in HTML (replace link tag with style tag)
-css_style_tag = f'<style>\n{css_content}\n</style>'
-html_content = html_content.replace('<link rel="stylesheet" href="invoice.css">', css_style_tag)
+    css_style_tag = f"<style>\n{css_content}\n</style>"
+    html_content = html_content.replace(
+        '<link rel="stylesheet" href="invoice.css">', css_style_tag
+    )
 
-# Step 5: Save the result to output folder
-import os
-os.makedirs('output', exist_ok=True)
+    items_table_rows = generate_items_rows(context["items"])
 
-# Create filename from invoice number (replace / with - for valid filename)
-safe_invoice_number = invoice_number.replace('/', '-')
-output_filename = f'output/invoice_{safe_invoice_number}.html'
+    replacements = {
+        "{{INVOICE_NUMBER}}": context["invoice_number"],
+        "{{ISSUE_DATE}}": context["issue_date"],
+        "{{SALE_DATE}}": context["sale_date"],
+        "{{SELLER_NAME}}": context["seller_name"],
+        "{{SELLER_NIP}}": context["seller_nip"],
+        "{{SELLER_STREET_ADDRESS}}": context["seller_street_address"],
+        "{{SELLER_POSTAL_CODE}}": context["seller_postal_code"],
+        "{{SELLER_CITY}}": context["seller_city"],
+        "{{BUYER_NAME}}": context["buyer_name"],
+        "{{BUYER_NIP}}": context["buyer_nip"],
+        "{{BUYER_STREET_ADDRESS}}": context["buyer_street_address"],
+        "{{BUYER_POSTAL_CODE}}": context["buyer_postal_code"],
+        "{{BUYER_CITY}}": context["buyer_city"],
+        "{{ITEMS_TABLE_ROWS}}": items_table_rows,
+        "{{TOTAL_NET_AMOUNT}}": context["total_net_amount"],
+        "{{TOTAL_VAT_AMOUNT}}": context["total_vat_amount"],
+        "{{TOTAL_GROSS_AMOUNT}}": context["total_gross_amount"],
+        "{{PAYMENT_METHOD}}": context["payment_method"],
+        "{{PAYMENT_DUE_DATE}}": context["payment_due_date"],
+        "{{BANK_ACCOUNT}}": context["bank_account"],
+        "{{AMOUNT_DUE_IN_WORDS}}": context["amount_due_in_words"],
+        "{{AUTHORIZED_ISSUER}}": context["authorized_issuer"],
+    }
 
-with open(output_filename, 'w', encoding='utf-8') as file:
-    file.write(html_content)
+    for placeholder, value in replacements.items():
+        html_content = html_content.replace(placeholder, value)
 
-print(f"Invoice saved as: {output_filename}")
+    return html_content
+
+
+def generate_invoice(context: Dict[str, str], output_dir: str = OUTPUT_DIR) -> str:
+    os.makedirs(output_dir, exist_ok=True)
+    html_content = render_invoice_html(context)
+
+    safe_invoice_number = context["invoice_number"].replace("/", "-")
+    filename = f"invoice_{safe_invoice_number}.html"
+    output_path = os.path.join(output_dir, filename)
+
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write(html_content)
+
+    return output_path
+
+
+def main():
+    context = load_invoice_context_from_file()
+    output_path = generate_invoice(context)
+    print(f"Invoice saved as: {output_path}")
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI usage
+    main()

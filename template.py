@@ -1,85 +1,138 @@
+from decimal import Decimal, ROUND_HALF_UP
 import json
+from typing import Any, Dict, List
+
 from convert_to_words import convert_to_words
 
-# Load invoice data from JSON file
-with open('invoice_data.json', 'r', encoding='utf-8') as file:
-    data = json.load(file)
+TWO_PLACES = Decimal("0.01")
 
-# Invoice Header - now from file!
-invoice_number = data['invoice_number']
-issue_date = data['issue_date']
-sale_date = data['sale_date']
 
-# Seller Information - from file!
-seller_name = data['seller_name']
-seller_nip = data['seller_nip']
-seller_street_address = data['seller_street_address']
-seller_postal_code = data['seller_postal_code']
-seller_city = data['seller_city']
+def _to_decimal(value: Any) -> Decimal:
+    """Convert value to Decimal with two decimal places."""
+    return Decimal(str(value)).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
 
-# Buyer Information - from file!
-buyer_name = data['buyer_name']
-buyer_nip = data['buyer_nip']
-buyer_street_address = data['buyer_street_address']
-buyer_postal_code = data['buyer_postal_code']
-buyer_city = data['buyer_city']
 
-# Signature and Authorized Issuer
-authorized_issuer = data['authorized_issuer']
-
-# Get items from file
-items_data = data['items']
-items = []
-
-# Convert example: Convert 18228.60 to '18 228,60'
-def format_polish_number(number):
-    formatted = f"{number:.2f}"
+def format_polish_number(number: Any, with_currency: bool = True) -> str:
+    """Format a number using Polish thousands separator and comma decimals."""
+    amount = _to_decimal(number)
+    formatted = f"{amount:.2f}"
     integer_part, decimal_part = formatted.split(".")
 
-    if len(integer_part) > 3:
-        integer_part = integer_part[:-3] + " " + integer_part[-3:]
-    return integer_part + "," + decimal_part + " PLN"
+    groups: List[str] = []
+    while integer_part:
+        groups.insert(0, integer_part[-3:])
+        integer_part = integer_part[:-3]
+    integer_with_spaces = " ".join(groups)
 
-for item_data in items_data:
-    quantity = float(item_data['quantity'])
-    net_unit_price = float(item_data['net_unit_price'])
-    vat_rate = float(item_data['vat_rate'])
-    
-    # Calculate
-    net_total = quantity * net_unit_price
-    vat_amount = net_total * (vat_rate / 100)
-    gross_total = net_total + vat_amount
-
-    # Calculate totals
-    total_net = sum(float(item['net_total'].replace(' ', '').replace(',', '.')) for item in items)
-    total_vat = sum(float(item['vat_amount'].replace(' ', '').replace(',', '.')) for item in items)
-    total_gross = sum(float(item['gross_total'].replace(' ', '').replace(',', '.')) for item in items)
+    result = f"{integer_with_spaces},{decimal_part}"
+    if with_currency:
+        result += " PLN"
+    return result
 
 
+def prepare_invoice_context(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Build the context dictionary used to render the invoice template."""
+    try:
+        invoice_number = data["invoice_number"]
+        issue_date = data["issue_date"]
+        sale_date = data["sale_date"]
+        seller_name = data["seller_name"]
+        seller_nip = data["seller_nip"]
+        seller_street_address = data["seller_street_address"]
+        seller_postal_code = data["seller_postal_code"]
+        seller_city = data["seller_city"]
+        buyer_name = data["buyer_name"]
+        buyer_nip = data["buyer_nip"]
+        buyer_street_address = data["buyer_street_address"]
+        buyer_postal_code = data["buyer_postal_code"]
+        buyer_city = data["buyer_city"]
+        items_data = data["items"]
+    except KeyError as exc:  # pragma: no cover - simple validation
+        raise ValueError(f"Missing required field: {exc.args[0]}") from exc
 
-    # Add to items list
-    items.append({
-        "lp": item_data['lp'],
-        "description": item_data['description'],
-        "unit": item_data['unit'],
-        "quantity": item_data['quantity'],
-        "net_unit_price": item_data['net_unit_price'],
-        "net_total": format_polish_number(net_total)[:-4],
-        "vat_rate": item_data['vat_rate'],
-        "vat_amount": format_polish_number(vat_amount)[:-4],
-        "gross_total": format_polish_number(gross_total)[:-4]
-    })
+    items: List[Dict[str, str]] = []
+    total_net = Decimal("0")
+    total_vat = Decimal("0")
 
-        # Or simpler - recalculate from items_data
-    total_net = sum(float(item['quantity']) * float(item['net_unit_price']) for item in items_data)
-    total_vat = sum(total_net * (float(item['vat_rate']) / 100) for item in items_data)
-    total_gross = total_net + total_vat
+    for index, item_data in enumerate(items_data, start=1):
+        try:
+            quantity_decimal = Decimal(str(item_data["quantity"]))
+            net_unit_price_decimal = _to_decimal(item_data["net_unit_price"])
+            vat_rate_decimal = Decimal(str(item_data["vat_rate"]))
+        except KeyError as exc:
+            raise ValueError(f"Missing required item field: {exc.args[0]}") from exc
 
-    total_net_amount = format_polish_number(total_net)
-    total_vat_amount = format_polish_number(total_vat)
-    total_gross_amount = format_polish_number(total_gross)
+        net_total = (quantity_decimal * net_unit_price_decimal).quantize(
+            TWO_PLACES, rounding=ROUND_HALF_UP
+        )
+        vat_amount = (net_total * vat_rate_decimal / Decimal("100")).quantize(
+            TWO_PLACES, rounding=ROUND_HALF_UP
+        )
+        gross_total = (net_total + vat_amount).quantize(
+            TWO_PLACES, rounding=ROUND_HALF_UP
+        )
 
-    payment_method = data['payment_method']
-    payment_due_date = data['payment_due_date']
-    bank_account = data['bank_account']
-    amount_due_in_words = convert_to_words(total_gross)
+        total_net += net_total
+        total_vat += vat_amount
+
+        items.append(
+            {
+                "lp": item_data.get("lp", str(index)),
+                "description": item_data.get("description", ""),
+                "unit": item_data.get("unit", ""),
+                "quantity": str(item_data.get("quantity", "")),
+                "net_unit_price": format_polish_number(
+                    net_unit_price_decimal, with_currency=False
+                ),
+                "net_total": format_polish_number(net_total, with_currency=False),
+                "vat_rate": str(item_data.get("vat_rate", "")),
+                "vat_amount": format_polish_number(vat_amount, with_currency=False),
+                "gross_total": format_polish_number(gross_total, with_currency=False),
+            }
+        )
+
+    total_gross = (total_net + total_vat).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+
+    payment_method = data.get("payment_method", "")
+    payment_due_date = data.get("payment_due_date", "")
+    bank_account = data.get("bank_account", "")
+    authorized_issuer = data.get("authorized_issuer", "")
+
+    amount_due_in_words = convert_to_words(f"{total_gross:.2f}")
+
+    return {
+        "invoice_number": invoice_number,
+        "issue_date": issue_date,
+        "sale_date": sale_date,
+        "seller_name": seller_name,
+        "seller_nip": seller_nip,
+        "seller_street_address": seller_street_address,
+        "seller_postal_code": seller_postal_code,
+        "seller_city": seller_city,
+        "buyer_name": buyer_name,
+        "buyer_nip": buyer_nip,
+        "buyer_street_address": buyer_street_address,
+        "buyer_postal_code": buyer_postal_code,
+        "buyer_city": buyer_city,
+        "items": items,
+        "total_net_amount": format_polish_number(total_net),
+        "total_vat_amount": format_polish_number(total_vat),
+        "total_gross_amount": format_polish_number(total_gross),
+        "payment_method": payment_method,
+        "payment_due_date": payment_due_date,
+        "bank_account": bank_account,
+        "amount_due_in_words": amount_due_in_words,
+        "authorized_issuer": authorized_issuer,
+    }
+
+
+def load_invoice_context_from_file(path: str = "invoice_data.json") -> Dict[str, Any]:
+    """Load invoice data from JSON file and prepare rendering context."""
+    with open(path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+    return prepare_invoice_context(data)
+
+
+if __name__ == "__main__":  # pragma: no cover - manual testing helper
+    context = load_invoice_context_from_file()
+    print(json.dumps(context, indent=2, ensure_ascii=False))
